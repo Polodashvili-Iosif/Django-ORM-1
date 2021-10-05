@@ -24,17 +24,15 @@ class Visit(models.Model):
     leaved_at = models.DateTimeField(null=True)
 
     def get_duration(visit):
-        local_entered_time = localtime(value=visit.entered_at,
-                                       timezone=pytz.timezone('Europe/Moscow')
-                                       )
         if visit.leaved_at is None:
-            seconds_delta = (datetime.datetime.now()
-                             - local_entered_time.replace(tzinfo=None)
-                             ).total_seconds()
+            entered_time = localtime(value=visit.entered_at,
+                                     timezone=pytz.timezone('Europe/Moscow')
+                                     ).replace(tzinfo=None)
+            leave_time = datetime.datetime.now()
         else:
-            seconds_delta = (visit.leaved_at
-                             - visit.entered_at
-                             ).total_seconds()
+            entered_time = visit.entered_at
+            leave_time = visit.leaved_at
+        seconds_delta = (leave_time - entered_time).total_seconds()
         return seconds_delta
 
     def format_duration(duration):
@@ -44,9 +42,7 @@ class Visit(models.Model):
         return f'{hours:02d}:{minutes:02d}:{seconds:02d}'
 
     def is_long(visit, minutes=60):
-        if Visit.get_duration(visit) / 60 > minutes:
-            return True
-        return False
+        return visit.get_duration() / 60 > minutes
 
     def __str__(self):
         return '{user} entered at {entered} {leaved}'.format(
